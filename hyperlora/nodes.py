@@ -605,7 +605,7 @@ class HyperLoRALoadCharLoRANode:
         return inputs_def(required=[
             enum_field('charname', options=list_chars('hyper_lora/chars'))
         ])
-        
+
     RETURN_TYPES = ('LORA', )
     FUNCTION = 'execute'
     CATEGORY = 'HyperLoRA'
@@ -617,6 +617,25 @@ class HyperLoRALoadCharLoRANode:
         return (lora, )
 
 
+class HyperLoRASaveCharLoRANode:
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return inputs_def(required=[
+            str_field('char_name', default='char1'),
+            custom_field('lora', type_name='LORA')
+        ])
+
+    RETURN_TYPES = ()
+    FUNCTION = 'execute'
+    CATEGORY = 'HyperLoRA'
+    OUTPUT_NODE = True
+
+    def execute(self, char_name, lora):
+        filename = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{char_name}.safetensors")
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        save_file(lora, filename)
+        return (True, )
 
 HYPER_LORA_CLASS_MAPPINGS = {
     'HyperLoRAConfig': HyperLoRAConfigNode,
@@ -630,7 +649,8 @@ HYPER_LORA_CLASS_MAPPINGS = {
     'HyperLoRAFaceAttr': HyperLoRAFaceAttrNode,
     'HyperLoRAUniLoader': HyperLoRAUniLoaderNode,
     'HyperLoRAUniGenerateIDLoRA': HyperLoRAUniGenerateIDLoRANode,
-    'HyperLoRALoadCharLoRA': HyperLoRALoadCharLoRANode
+    'HyperLoRALoadCharLoRA': HyperLoRALoadCharLoRANode,
+    'HyperLoRASaveCharLoRA': HyperLoRASaveCharLoRANode,
 }
 
 HYPER_LORA_DISPLAY_NAME_MAPPINGS = {
@@ -645,5 +665,6 @@ HYPER_LORA_DISPLAY_NAME_MAPPINGS = {
     'HyperLoRAFaceAttr': 'HyperLoRA Face Attr',
     'HyperLoRAUniLoader': 'HyperLoRA Uni Loader',
     'HyperLoRAUniGenerateIDLoRA': 'HyperLoRA Uni Generate ID LoRA',
-    'HyperLoRALoadCharLoRA': 'HyperLoRA Load Char LoRA'
+    'HyperLoRALoadCharLoRA': 'HyperLoRA Load Char LoRA',
+    'HyperLoRASaveCharLoRA': 'HyperLoRA Save Char LoRA',
 }
