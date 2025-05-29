@@ -62,8 +62,8 @@ def list_chars(sub_dir):
     models = []
     if os.path.exists(full_folder):
         for fn in os.listdir(full_folder):
-            
-            models.append(os.path.splitext(fn)[0])
+            if fn.endswith('.safetensors'):
+                models.append(os.path.splitext(fn)[0])
     if len(models) == 0:
         models.append('Not found!')
     return models
@@ -601,20 +601,33 @@ class HyperLoRALoadCharLoRANode:
 
     @classmethod
     def INPUT_TYPES(cls):
-
         return inputs_def(required=[
             enum_field('charname', options=list_chars('hyper_lora/chars'))
         ])
 
-    RETURN_TYPES = ('LORA', )
+    RETURN_TYPES = ('LORA', 'IMAGE')
     FUNCTION = 'execute'
     CATEGORY = 'HyperLoRA'
 
     def execute(self, charname):
+        import glob
+        from .common import images2tensor
         filename = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{charname}.safetensors")
         assert os.path.isfile(filename), f'LoRA文件未找到: {filename}'
         lora = load_file(filename)
-        return (lora, )
+        # 查找同名图片
+        img_pattern = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{charname}_??.png")
+        img_files = sorted(glob.glob(img_pattern))
+        img_list = []
+        from PIL import Image
+        for img_path in img_files:
+            try:
+                img = Image.open(img_path).convert('RGB')
+                img_list.append(img)
+            except Exception as e:
+                print(f"图片读取失败: {img_path}, {e}")
+        images_tensor = images2tensor(img_list) if img_list else None
+        return (lora, images_tensor)
 
 
 class HyperLoRASaveCharLoRANode:
