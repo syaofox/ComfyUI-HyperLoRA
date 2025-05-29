@@ -623,7 +623,9 @@ class HyperLoRASaveCharLoRANode:
     def INPUT_TYPES(cls):
         return inputs_def(required=[
             str_field('char_name', default='char1'),
-            custom_field('lora', type_name='LORA')
+            custom_field('lora', type_name='LORA'),
+        ], optional=[
+            image_field('images')
         ])
 
     RETURN_TYPES = ()
@@ -631,10 +633,17 @@ class HyperLoRASaveCharLoRANode:
     CATEGORY = 'HyperLoRA'
     OUTPUT_NODE = True
 
-    def execute(self, char_name, lora):
+    def execute(self, char_name, lora, images=None):
         filename = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{char_name}.safetensors")
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         save_file(lora, filename)
+        # 保存图片batch
+        if images is not None and hasattr(images, 'shape') and images.shape[0] > 0:
+            from .common import tensor2images
+            img_list = tensor2images(images)
+            for idx, img in enumerate(img_list, 1):
+                img_path = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{char_name}_{idx:02d}.png")
+                img.save(img_path)
         return (True, )
 
 HYPER_LORA_CLASS_MAPPINGS = {
