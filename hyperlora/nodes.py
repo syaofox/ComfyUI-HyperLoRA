@@ -57,6 +57,17 @@ def list_models(model_type):
         models.append('Not found!')
     return models
 
+def list_chars(sub_dir):
+    full_folder = os.path.join(folder_paths.models_dir, sub_dir)
+    models = []
+    if os.path.exists(full_folder):
+        for fn in os.listdir(full_folder):
+            
+            models.append(os.path.splitext(fn)[0])
+    if len(models) == 0:
+        models.append('Not found!')
+    return models
+
 def face_bbox(landmark: np.ndarray):
     x_min, y_min = landmark.min(axis=0)
     x_max, y_max = landmark.max(axis=0)
@@ -586,6 +597,26 @@ class HyperLoRAUniGenerateIDLoRANode:
         id_conds = HyperLoRAUniGenerateIDLoRANode.ID_COND_NODE.execute(hyper_lora, images, face_attrs, grayscale, remove_background)[0]
         return HyperLoRAUniGenerateIDLoRANode.GEN_ID_LORA_NODE.execute(hyper_lora, id_conds)
 
+class HyperLoRALoadCharLoRANode:
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return inputs_def(required=[
+            enum_field('charname', options=list_chars('hyper_lora/chars'))
+        ])
+        
+    RETURN_TYPES = ('LORA', )
+    FUNCTION = 'execute'
+    CATEGORY = 'HyperLoRA'
+
+    def execute(self, charname):
+        filename = os.path.join(folder_paths.models_dir, 'hyper_lora/chars', f"{charname}.safetensors")
+        assert os.path.isfile(filename), f'LoRA文件未找到: {filename}'
+        lora = load_file(filename)
+        return (lora, )
+
+
 
 HYPER_LORA_CLASS_MAPPINGS = {
     'HyperLoRAConfig': HyperLoRAConfigNode,
@@ -598,7 +629,8 @@ HYPER_LORA_CLASS_MAPPINGS = {
     'HyperLoRASaveLoRA': HyperLoRASaveLoRANode,
     'HyperLoRAFaceAttr': HyperLoRAFaceAttrNode,
     'HyperLoRAUniLoader': HyperLoRAUniLoaderNode,
-    'HyperLoRAUniGenerateIDLoRA': HyperLoRAUniGenerateIDLoRANode
+    'HyperLoRAUniGenerateIDLoRA': HyperLoRAUniGenerateIDLoRANode,
+    'HyperLoRALoadCharLoRA': HyperLoRALoadCharLoRANode
 }
 
 HYPER_LORA_DISPLAY_NAME_MAPPINGS = {
@@ -612,5 +644,6 @@ HYPER_LORA_DISPLAY_NAME_MAPPINGS = {
     'HyperLoRASaveLoRA': 'HyperLoRA Save LoRA',
     'HyperLoRAFaceAttr': 'HyperLoRA Face Attr',
     'HyperLoRAUniLoader': 'HyperLoRA Uni Loader',
-    'HyperLoRAUniGenerateIDLoRA': 'HyperLoRA Uni Generate ID LoRA'
+    'HyperLoRAUniGenerateIDLoRA': 'HyperLoRA Uni Generate ID LoRA',
+    'HyperLoRALoadCharLoRA': 'HyperLoRA Load Char LoRA'
 }
